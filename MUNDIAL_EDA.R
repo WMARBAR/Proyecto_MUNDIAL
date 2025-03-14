@@ -2,40 +2,33 @@ library(readxl)
 library(lubridate)
 library(dplyr)
 library(stringr)
+library(writexl)
 
-# Leer el archivo Excel (sin forzar col_types)
-MUND_players <- "Mundial_Historic_RawData.xlsx"  
-MUND_DF <- read_excel(MUND_players)
+#----------DATA MUNDIAL FINAL---------------------------------------------
+MUNDIALES_DF <- "Players_Mundial_RAWdata.xlsx"
+DF_MUNDIALES <- read_excel(MUNDIALES_DF)
 
-# Función para extraer el año correctamente
-convertir_año <- function(fecha) {
-  if (is.na(fecha) | fecha == "") {
-    return(0)  # Si está vacío o es NA, poner 0
-  } else if (is.numeric(fecha)) {
-    # Si es un número (serial de Excel), convertirlo a fecha y extraer el año
-    return(year(as.Date(fecha, origin = "1899-12-30")))
-  } else {
-    # Si es texto, extraer el año con regex
-    year_extraido <- str_extract(fecha, "\\d{4}") %>% as.numeric()
-    if (is.na(year_extraido) | year_extraido < 1800 | year_extraido > 2100) {
-      return(0)  # Si el año es inválido, devolver 0
-    } else {
-      return(year_extraido)
-    }
-  }
-}
+colnames(DF_MUNDIALES)
 
-# Aplicar la función a la columna "Fecha de Nacimiento"
-MUND_DF <- MUND_DF %>%
-  mutate(
-    birth_year = sapply(`Fecha de Nacimiento`, convertir_año),
-    edad_enMundial = ifelse(birth_year > 0, Año - birth_year, NA), # Calcular edad, si birth_year es 0 poner NA
-    years_expMundial = ifelse(birth_year > 0, Año - as.numeric(`Año de Debut`), NA)
-  )
-# Mostrar resultado
-print(MUND_DF)
+# Reemplazar los valores vacíos en edad_Player con el promedio de la columna
+DF_MUNDIALES <- DF_MUNDIALES %>%
+  mutate(edad_Player = if_else(is.na(edad_Player), 
+                               mean(edad_Player, na.rm = TRUE), 
+                               edad_Player))
 
-# TECNICOS
-MUND_tecnicos <- "Aux_Tecnicos.xlsx"
-TECNICOS_DF <- read_excel(MUND_tecnicos)
-TECNICOS_DF
+#----------DATA PUESTOS 1---------------------------------------------
+# Filtrar los datos para obtener solo los puestos 1
+DF_MUNDIALES_champs <- DF_MUNDIALES %>%
+  filter(Puesto_obtenido == 1)
+
+# Verificar el resultado
+print(DF_MUNDIALES_champs)
+
+colnames(DF_MUNDIALES_champs)
+
+
+#----------EXPORT TO EXCEL---------------------------------------------
+ruta_guardado_selecciones <- "test_analisis.xlsx"
+write_xlsx(DF_MUNDIALES, ruta_guardado_selecciones)
+# Mensaje de confirmación
+cat("Archivo guardado en:", ruta_guardado_selecciones, "\n")
