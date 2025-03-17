@@ -1,3 +1,5 @@
+##EDA DE LA BASE Players_Mundial_RAWdata.xlsx
+
 library(readxl)
 library(lubridate)
 library(dplyr)

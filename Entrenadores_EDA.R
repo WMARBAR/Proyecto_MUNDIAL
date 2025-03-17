@@ -1,3 +1,6 @@
+## CODIGO ENCARGADO DE CREAR LA DATA AUX_TECNICO QUE ES LA QUE SE VA A CRUZAR
+## CON LA DATA DE JUGADORES
+
 library(readxl)
 library(lubridate)
 library(dplyr)
@@ -22,8 +25,8 @@ df_historica <- df_historica %>%
   mutate(
     num_mes_init = meses_dict[Mes_init], 
     num_mes_end = meses_dict[Mes_end],
-    init_date = make_date(Año, num_mes_init, Day_init),
-    end_date = make_date(Año, num_mes_end, Day_end),  
+    init_date = make_date(MYEAR, num_mes_init, Day_init),
+    end_date = make_date(MYEAR, num_mes_end, Day_end),  
     dias_durados = as.integer(end_date - init_date)
   )
 #----------DATA TECNICOS-----------------------------------------------------------
@@ -32,15 +35,15 @@ nombre_hoja <- nombres_hojas[2]
 df_tecnicos <- read_excel(archivo_excel, sheet = nombre_hoja)
 
 df_tecnicos <- df_tecnicos %>%
-  left_join(df_historica %>% select(Año, init_date, `País Anfitrión`, Campeón, dias_durados), by = "Año")
+  left_join(df_historica %>% select(MYEAR, init_date, `País Anfitrión`, Campeón, dias_durados), by = "MYEAR")
 
 df_tecnicos <- df_tecnicos %>%
   mutate(
     num_mes = meses_dict[Mes],  
     birth_date = make_date(Year, num_mes, Day),  
-    tecnico_campeon = ifelse(Selección == Campeón, 1, 0),
-    Tecnico_outsider = ifelse(Nacionalidad == Selección, 0, 1),
-    tecnico_anfitrion = ifelse(Selección == `País Anfitrión`, 1, 0),
+    tecnico_campeon = ifelse(Seleccion == Campeón, 1, 0),
+    Tecnico_outsider = ifelse(Nacionalidad == Seleccion, 0, 1),
+    tecnico_anfitrion = ifelse(Seleccion == `País Anfitrión`, 1, 0),
     edad_enMundial = as.numeric(interval(birth_date, init_date) / years(1))
         )
 
