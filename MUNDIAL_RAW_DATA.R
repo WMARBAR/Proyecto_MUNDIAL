@@ -34,11 +34,10 @@ MUND_DF <- MUND_DF %>%
     birth_year = sapply(Player_Birth, convertir_MYEAR),
     edad_Player = ifelse(birth_year > 0, MYEAR - birth_year, NA), # Calcular edad, si birth_year es 0 poner NA
     years_expMundial = ifelse(birth_year > 0, MYEAR - as.numeric(`Año de Debut`), NA),
-    edad_debut = ifelse(birth_year > 0 & !is.na(`Año de Debut`), as.numeric(`Año de Debut`) - birth_year, NA)
   )
 print(MUND_DF)
 
-#----------DATA TECNICOS---------------------------------------------
+#----------DATA TECNICOS-----------------------------------------------
 MUND_tecnicos <- "Aux_Tecnicos.xlsx"
 TECNICOS_DF <- read_excel(MUND_tecnicos)
 
@@ -46,12 +45,11 @@ TECNICOS_DF <- read_excel(MUND_tecnicos)
 archivo_excel <- "Mundial_Aux_Data.xlsx"
 nombres_hojas <- excel_sheets(archivo_excel)
 # Leer una hoja específica (ejemplo: la primera hoja)
-nombre_hoja <- nombres_hojas[3]  # Puedes cambiar el índice para leer otra hoja
+nombre_hoja <- nombres_hojas[3]  # indice de hojas
 
 # Leer los datos de la hoja seleccionada
 MUND_POSICIONES <- read_excel(archivo_excel, sheet = nombre_hoja)
 MUND_POSICIONES
-
 
 #----------JOIN MEGA BASE---------------------------------------------
 # Seleccionar las columnas que queremos traer de TECNICOS_DF
@@ -69,9 +67,8 @@ equipo_local = ifelse(`País Anfitrión` == Seleccion, 1, 0)
 # Convertir MYEAR a numérico en ambas bases
 MUND_DF <- MUND_DF %>% mutate(MYEAR = as.numeric(MYEAR))
 MUND_POSICIONES <- MUND_POSICIONES %>% mutate(MYEAR = as.numeric(MYEAR))
-
 MUND_DF <- MUND_DF %>%
-  left_join(MUND_POSICIONES %>% select(MYEAR, Seleccion,FaseAlcanzada), by = c("MYEAR", "Seleccion"))
+  left_join(MUND_POSICIONES %>% select(MYEAR, Seleccion,Era,FaseAlcanzada), by = c("MYEAR", "Seleccion"))
 
 # Verificar la estructura después del join
 colnames(MUND_DF)
