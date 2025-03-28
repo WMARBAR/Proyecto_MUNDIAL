@@ -137,37 +137,51 @@ DF_MUNDIALES <- DF_MUNDIALES %>%
 #---** EDADES DE LOS 3 GRUPOS **------------------------------------------------
 #---------------------------------------------------------------------
 
-# Crear el gráfico de densidad
 densidad_edades <- ggplot() +
   # Densidad de Campeones
-  geom_density(data = DF_CAMPEONES, aes(x = edad_Player, weight = player_ones),
-               fill = "goldenrod1", color = "goldenrod3", alpha = 0.4, size = 1.2) +
+  geom_density(data = DF_CAMPEONES, aes(x = edad_Player, weight = player_ones, color = "Campeones", fill = "Campeones"),
+               alpha = 0.4, size = 1.2) +
   
   # Densidad de Perdedores
-  geom_density(data = DF_ELIMINADOS, aes(x = edad_Player, weight = player_ones),
-               fill = "lightcoral", color = "darkred", alpha = 0.4, size = 1.2) +
+  geom_density(data = DF_ELIMINADOS, aes(x = edad_Player, weight = player_ones, color = "Perdedores", fill = "Perdedores"),
+               alpha = 0.4, size = 1.2) +
   
   # Densidad de Subcampeones / Semifinalistas
-  geom_density(data = DF_SUB_SEMIS, aes(x = edad_Player, weight = player_ones),
-               fill = "lightskyblue", color = "steelblue", alpha = 0.4, size = 1.2) +
+  geom_density(data = DF_SUB_SEMIS, aes(x = edad_Player, weight = player_ones, color = "Subcampeones/Semis", fill = "Subcampeones/Semis"),
+               alpha = 0.4, size = 1.2) +
+  
+  scale_fill_manual(values = c("Campeones" = "goldenrod1",
+                               "Perdedores" = "lightcoral",
+                               "Subcampeones/Semis" = "lightskyblue")) +
+  scale_color_manual(values = c("Campeones" = "goldenrod3",
+                                "Perdedores" = "darkred",
+                                "Subcampeones/Semis" = "steelblue")) +
   
   labs(title = "Distribución de Edad por Grupo",
        x = "Edad de los Jugadores",
-       y = "Densidad") +
+       y = "Densidad",
+       color = "Grupo",
+       fill = "Grupo") +
   
-  theme_minimal(base_family = "serif") +
+  theme_minimal(base_family = "Consolas") +
   theme(
-    plot.title = element_text(family = "Consolas", face = "bold", size = 22, hjust = 0.5),
-    axis.text = element_text(size = 25),
-    axis.title = element_text(size = 25)
+    plot.title = element_text(family = "Consolas", face = "bold", size = 28, hjust = 0.5),
+    axis.text = element_text(size = 25, family = "Consolas"),
+    axis.title = element_text(size = 26, family = "Consolas"),
+    legend.title = element_text(family = "Consolas", size = 24, face = "bold"),
+    legend.text = element_text(family = "Consolas", size = 22),
+    legend.position = "top",
+    legend.justification = "center"
   )
 
 # Mostrar gráfico
-densidad_edades
+print(densidad_edades)
 
-ggsave(filename = "GRAPHS/dist_edades.png",
+# Guardar el gráfico con leyenda
+ggsave(filename = "GRAPHS/dist_edades_con_leyenda.png",
        plot = densidad_edades,
        width = 12, height = 8, dpi = 300)
+
 
 
 library(e1071)
@@ -242,8 +256,6 @@ print(boxplot_jugadores)
 ggsave(filename = "GRAPHS/boxplot_edades_golbal.png",
        plot = boxplot_jugadores,
        width = 12, height = 8, dpi = 300)
-
-
 
 #---------------------------------------------------------------------
 #---** DENSIDAD de EXPERIENCIA en Mundiales por GRUPO **--------------
@@ -351,6 +363,16 @@ densidad_edades_posicion <- ggplot(DF_CAMP_POSICION, aes(x = edad_Player, color 
 # 📌 Mostrar el gráfico
 print(densidad_edades_posicion)
 
+library(e1071)
+library(dplyr)
+
+# Calcular curtosis por cada posición
+curtosis_por_posicion <- DF_CAMP_POSICION %>%
+  group_by(categ_posicion) %>%
+  summarise(Curtosis = kurtosis(edad_Player, na.rm = TRUE)+3)
+
+print(curtosis_por_posicion)
+
 # 📌 Guardar como imagen
 ggsave(filename = "GRAPHS/densidad_edad_campeones_por_posicion.png",
        plot = densidad_edades_posicion,
@@ -391,6 +413,12 @@ densidad_edades_perdedores <- ggplot(DF_PERDEDOR_POSICION, aes(x = edad_Player, 
   )
 
 print(densidad_edades_perdedores)
+# Calcular curtosis por cada posición
+curtosis_por_posicion <- DF_PERDEDOR_POSICION %>%
+  group_by(categ_posicion) %>%
+  summarise(Curtosis = kurtosis(edad_Player, na.rm = TRUE)+3)
+
+print(curtosis_por_posicion)
 
 # 📌 Exportar la gráfica limpia y sin grises
 ggsave(filename = "GRAPHS/densidad_edad_perdedores_por_posicion.png",
@@ -849,7 +877,6 @@ DF_BARRA_CATEG <- DF_MUNDIALES %>%
   ungroup()
 
 
-
 # Reordenar las categorías de mayor a menor según el porcentaje
 DF_BARRA_CATEG <- DF_BARRA_CATEG %>%
   group_by(grupo) %>%
@@ -1003,6 +1030,47 @@ cor.test(DF_ANOTADORES$years_expMundial,
 ggsave(filename = "GRAPHS/correlacion_exp_goles.png",
        plot = grafico_correlacion_exp,
        width = 12, height = 8, dpi = 300)
+#---------------------------------------------------------------------
+# CORRELACION: DuracionMundial Vs Goles---------------------------------------
+#---------------------------------------------------------------------
+
+# Agrupar por Mundial y Selección (mismo paso)
+DF_CORR_EQUIPO <- DF_MUNDIALES %>%
+  group_by(MYEAR, Seleccion) %>%
+  summarise(
+    goles_equipo = sum(`Goles Marcados(mundial)`, na.rm = TRUE),
+    dias_durados = max(dias_durados, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Scatter plot limpio: sin colores por grupo, sin línea de tendencia
+grafico_corr_dias_goles <- ggplot(DF_CORR_EQUIPO, aes(x = dias_durados, y = goles_equipo)) +
+  geom_point(size = 5, alpha = 0.7, color = "seagreen4") +  # Color sólido para todos
+  labs(title = "Relación entre Días Jugados y Goles Anotados\n(Equipos por Mundial)",
+       x = "Días Jugados por el Equipo",
+       y = "Goles Anotados por el Equipo") +
+  theme_minimal(base_family = "Consolas") +
+  theme(
+    plot.title = element_text(size = 28, face = "bold", hjust = 0.5),
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+
+print(grafico_corr_dias_goles)
+
+
+# Guardar el gráfico
+ggsave(filename = "GRAPHS/grafico_corr_dias_goles.png",
+       plot = grafico_corr_dias_goles,
+       width = 12, height = 8, dpi = 300)
+
+# Correlación general (Spearman o Pearson según prefieras)
+cor_test_result <- cor.test(DF_CORR_EQUIPO$dias_durados, DF_CORR_EQUIPO$goles_equipo, method = "spearman")
+print(cor_test_result)
+
+
+
+
 
 #---------------------------------------------------------------------
 #---** BATALLA POR CONTINENTE (CONSOLAS y tamaño +5) **
